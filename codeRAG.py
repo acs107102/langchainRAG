@@ -16,6 +16,7 @@ from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage
 from langgraph.graph import END
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.checkpoint.memory import MemorySaver
 
 from typing import Literal
 from typing_extensions import Annotated
@@ -156,12 +157,29 @@ graph_builder.add_edge("generate", END)
 
 graph = graph_builder.compile()
 
+# for history
+memory = MemorySaver()
+graph = graph_builder.compile(checkpointer=memory)
+
+# Specify an ID for the thread
+config = {"configurable": {"thread_id": "abc123"}}
+
 # question
 input_message = "What is Task Decomposition?"
 
 for step in graph.stream(
     {"messages": [{"role": "user", "content": input_message}]},
     stream_mode="values",
+    config=config,
+):
+    step["messages"][-1].pretty_print()
+
+input_message = "Can you look up some common ways of doing it?"
+
+for step in graph.stream(
+    {"messages": [{"role": "user", "content": input_message}]},
+    stream_mode="values",
+    config=config,
 ):
     step["messages"][-1].pretty_print()
 
