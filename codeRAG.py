@@ -17,6 +17,7 @@ from langchain_core.messages import SystemMessage
 from langgraph.graph import END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
 
 from typing import Literal
 from typing_extensions import Annotated
@@ -161,27 +162,23 @@ graph = graph_builder.compile()
 memory = MemorySaver()
 graph = graph_builder.compile(checkpointer=memory)
 
+# agent: make decision during execution
+agent_executor = create_react_agent(llm, [retrieve], checkpointer=memory)
+
 # Specify an ID for the thread
-config = {"configurable": {"thread_id": "abc123"}}
+config = {"configurable": {"thread_id": "def234"}}
 
-# question
-input_message = "What is Task Decomposition?"
+input_message = (
+    "What is the standard method for Task Decomposition?\n\n"
+    "Once you get the answer, look up common extensions of that method."
+)
 
-for step in graph.stream(
+for event in agent_executor.stream(
     {"messages": [{"role": "user", "content": input_message}]},
     stream_mode="values",
     config=config,
 ):
-    step["messages"][-1].pretty_print()
-
-input_message = "Can you look up some common ways of doing it?"
-
-for step in graph.stream(
-    {"messages": [{"role": "user", "content": input_message}]},
-    stream_mode="values",
-    config=config,
-):
-    step["messages"][-1].pretty_print()
+    event["messages"][-1].pretty_print()
 
 # # alternative
 # question = "..."
