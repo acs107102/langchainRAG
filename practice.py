@@ -12,7 +12,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 DATA_PATH = "Data"
 CHROMA_PATH = "Chroma_DB"
-WEBSITE = "https://en.wikipedia.org/wiki"
+WEBSITE = "https://en.wikipedia.org/wiki/"
 
 llm = ChatOpenAI(model="gpt-4o-mini")
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
@@ -63,11 +63,6 @@ def streamResponse(message, history):
             partial_message += response.content
             yield partial_message
     
-    #     history.append({"role": "user", "content": message})
-    #     history.append({"role": "assistant", "content": partial_message})
-    #     print(partial_message)
-    # return "", history
-
 def process(loader):
     docs = loader.load()
 
@@ -81,35 +76,39 @@ def process(loader):
     vector_store.add_documents(documents=all_splits)
 
 def handle_input(file, fileName, link):
+        print(file, fileName, link)
         if file:
             process(PyPDFLoader(file))
-            return "Upload Complete (PDF)", gr.update(visible=True)
+            response =  "Upload Complete (PDF)"
         elif fileName:
             loader = WebBaseLoader(
                 web_paths=(WEBSITE+fileName,),
             )
             process(loader)
-            return "Upload Complete (Wiki)",  gr.update(visible=True)
+            response = f"Upload Complete (Wiki: {fileName})"
         elif link:
             loader = WebBaseLoader(
                 web_paths=(link,),
             )
             process(loader)
-            return "Upload Complete (Link)",  gr.update(visible=True)
+            response = f"Upload Complete (Link: {link})"
         else:
-            return "Please upload file", gr.update(visible=False)
+            return "Please upload file", gr.update(visible=False), gr.update(value=None), gr.update(value=""), gr.update(value="")
+        
+        return response, gr.update(visible=True), gr.update(value=None), gr.update(value=""), gr.update(value="")
 
 
 # initiate the Gradio app
 with gr.Blocks() as chatbot:
+    state = gr.State()
     with gr.Row():
         upload_button = gr.File(label="Upload PDF")
         with gr.Column():
-            wiki_search  = gr.Textbox(label="Wiki Search", placeholder="Type the anything you want to know from wiki", lines=2)
-            website_search = gr.Textbox(label="Website Search", placeholder="Type the anything you want to know from wiki", lines=2)
+            wiki_search  = gr.Textbox(label="Wiki Search", placeholder="Type anything you want to know from wiki", lines=2)
+            website_search = gr.Textbox(label="Website Search", placeholder="Type any links", lines=2)
 
     submit_button = gr.Button("Submit")
-    output_area = gr.Textbox(label="Message", lines=1, interactive=False)
+    output_area = gr.Textbox(label="System Message", lines=1, interactive=False)
 
     with gr.Column(visible=False) as chat_row:
 
@@ -118,7 +117,7 @@ with gr.Blocks() as chatbot:
             streamResponse,
             type="messages")
 
-    submit_button.click(handle_input, inputs=[upload_button, wiki_search, website_search], outputs=[output_area, chat_row])
+    submit_button.click(handle_input, inputs=[upload_button, wiki_search, website_search], outputs=[output_area, chat_row, upload_button, wiki_search, website_search])
 
 # launch the Gradio app
 chatbot.launch()
