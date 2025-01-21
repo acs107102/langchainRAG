@@ -24,19 +24,24 @@ vector_store = Chroma(
     persist_directory=CHROMA_PATH,
 )
 
+# retrieve
 num = 5
 retriever = vector_store.as_retriever(search_kwargs={'k': num})
 
 def streamResponse(message, history):
     print(f"Input: {message}. History: {history}\n")
+    '''
+    {'role': 'user', 'metadata': {'title': None, 'id': None, 'parent_id': None, 'duration': None, 'status': None}, 'content': 'what is banana', 'options': None}, {'role': 'assistant', 'metadata': {'title': None, 'id': None, 'parent_id': None, 'duration': None, 'status': None}, 'content': 'A banana is an elongated, edible fruit that is botanically classified as a berry. It is produced by several kinds of large treelike herbaceous flowering plants in the genus Musa. In various regions, cooking bananas are referred to as plantains, which differentiates them from dessert bananas. The fruit can vary in size, color, and firmness but is typically elongated and curved, with soft, starchy flesh covered by a peel that can have different colors when ripe. Bananas grow in clusters near the top of the plant. Most modern edible seedless cultivated bananas are derived from two wild species: Musa acuminata and Musa balbisiana, or hybrids of these species.', 'options': None}
+    '''
 
+    # find k documents
     docs = retriever.invoke(message)
+    '''Document(id='ac3d3064-0815-4fe3-ab52-2a31e4ba711c', metadata={'language': 'en', 'source': 'https://en.wikipedia.org/wiki/apple\n', 'title': 'Bad title - Wikipedia'}, page_content='In other projects\n\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAppearance\nmove to sidebar\nhide\n\n\n\n\n\n\n\n\n\n\nThe requested page title contains unsupported characters: "\n".\nReturn to Main Page.\n\nRetrieved from "https://en.wikipedia.org/wiki/Special:Badtitle"\n\n\n\n\n\n\n\n\n\nPrivacy policy\nAbout Wikipedia\nDisclaimers\nContact Wikipedia\nCode of Conduct\nDevelopers\nStatistics\nCookie statement\nMobile view\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSearch\n\n\n\n\n\n\n\n\n\n\n\n\n\nSearch\n\n\n\n\n\nBad title\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAdd topic')'''
 
     knowledge = ""
 
     for doc in docs:
         knowledge += doc.page_content+"\n\n"
-
 
     if message is not None:
 
@@ -56,7 +61,7 @@ def streamResponse(message, history):
 
         """
 
-        #print(rag_prompt)
+        # print("rag_prompt", rag_prompt)
 
         # stream the response to the Gradio App
         for response in llm.stream(rag_prompt):
@@ -66,17 +71,16 @@ def streamResponse(message, history):
 def process(loader):
     docs = loader.load()
 
-    print(f"Loaded {len(docs)} documents")
+    # print(f"Loaded {len(docs)} documents")
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     all_splits = text_splitter.split_documents(docs)
 
-    print(f"Split the documents into {len(all_splits)} sub-documents")
+    # print(f"Split the documents into {len(all_splits)} sub-documents")
 
     vector_store.add_documents(documents=all_splits)
 
 def handle_input(file, fileName, link):
-        print(file, fileName, link)
         if file:
             process(PyPDFLoader(file))
             response =  "Upload Complete (PDF)"
@@ -93,9 +97,9 @@ def handle_input(file, fileName, link):
             process(loader)
             response = f"Upload Complete (Link: {link})"
         else:
-            return "Please upload file", gr.update(visible=False), gr.update(value=None), gr.update(value=""), gr.update(value="")
+            return "Please upload file", gr.update(visible=False)
         
-        return response, gr.update(visible=True), gr.update(value=None), gr.update(value=""), gr.update(value="")
+        return response, gr.update(visible=True)
 
 
 # initiate the Gradio app
@@ -117,7 +121,7 @@ with gr.Blocks() as chatbot:
             streamResponse,
             type="messages")
 
-    submit_button.click(handle_input, inputs=[upload_button, wiki_search, website_search], outputs=[output_area, chat_row, upload_button, wiki_search, website_search])
+    submit_button.click(handle_input, inputs=[upload_button, wiki_search, website_search], outputs=[output_area, chat_row])
 
 # launch the Gradio app
 chatbot.launch()
