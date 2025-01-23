@@ -1,9 +1,13 @@
-# This is my tiny project for RAG
+# A personal study system
+
+This is a study system that can base on course content (PDF) and generate the question to review the knowledge
 
 ## Key Point
 
-1. Using langchain framework
+1. Technique: RAG with langchain framework
 
-2. `myStudyResouce.py`: A personal study resource review system. It can generate question and handle the mistake question.
+2. Can Generate dataset from local folder or upload to the system (vector_store)
 
-3. `generateDB.py`: For generate the dataset (vector_store)
+3. Can generate question and handle the mistake
+
+4. Can select different subject
