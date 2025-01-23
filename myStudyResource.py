@@ -5,6 +5,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
+from langchain_core.prompts import PromptTemplate
 import gradio as gr
 import json
 
@@ -12,8 +13,9 @@ from dotenv import load_dotenv
 load_dotenv()
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-CHROMA_PATH = "Chroma_DB_School"
+CHROMA_PATH = "Chroma_DB_School_i"
 MISTAKES_BOOK = "mistakes.json"
+SUBJECT_LIST = ["Robots", "Algorithm"]
 
 llm = ChatOpenAI(model="gpt-4o-mini")
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
@@ -25,11 +27,16 @@ vector_store = Chroma(
     persist_directory=CHROMA_PATH,
 )
 
-# retrieve
-num = 5
-# retriever = vector_store.as_retriever(search_kwargs={'k': num})
+def subjectNameCheck(subject):
+    for name in SUBJECT_LIST:
+        if name == subject:
+            return True
+    return False
     
-def generateQuestion(message, subject):
+def generateQuestion(subject):
+    # retrieve
+    num = 5
+    name = str
     if subject == "all":
         retriever = vector_store.as_retriever(
             search_type="similarity",
@@ -37,9 +44,8 @@ def generateQuestion(message, subject):
                 'k': num
                 }
         )
-    elif subject == "":
-        return "No"
-    else:
+        name = "all the resource"
+    elif subjectNameCheck(subject):
         retriever = vector_store.as_retriever(
             search_type="similarity",
             search_kwargs={
@@ -47,35 +53,36 @@ def generateQuestion(message, subject):
                 'filter': {"subject": subject}
                 }
         )
+        name = subject
+    else:
+        return "No"
 
-    # PromptTemplate.from_template(
-        
-    # )
-    docs = retriever.invoke(message)
+    docs = retriever.invoke("Generate questions from " + name)
 
     knowledge = ""
     for doc in docs:
         knowledge += doc.page_content+"\n\n"
 
-    prompt_Temp = f"""
-        You are a teacher. The subject is: {subject}
-        Below is the content from the course. Based on this content, please create exactly 3 questions. 
-        Each question is a multiple-choice and you must provide the correct answer.
-
-        The question should focus on core theories, technical details, or key concepts discussed in the course.
-        Avoid including information related to assignments, syllabus outlines, or non-critical content. 
+    prompt_Temp = """
+        You are a teacher. The subject is: {subjectName}
+        Below is the content from the course. Based on this content, please create exactly 3 multiple-choice questions.  
+        Each question must focus on core theories, technical details, or key concepts discussed in the course. Avoid including information related to assignments, syllabus outlines, or non-critical content. 
 
         Important: You must ONLY output valid JSON, with the following structure (no extra text or explanation):
         {{ "subject": "Subject name", "questions": [ {{ "question": "Question text", "options": ["Option A", "Option B", "Option C", "Option D"], "answer": "Correct answer" }}, ... ] }}
         
+        - The correct answer must be **identical** to one of the provided options.
         - Do not include any additional keys or fields.
         - Do not include any extra text outside the JSON.
 
         Course Content:
-        {knowledge}
+        {content}
     """
 
-    question = llm.invoke(prompt_Temp)
+    prompt_template = PromptTemplate.from_template(prompt_Temp)
+    messages = prompt_template.invoke({"subjectName": subject, "content": knowledge})
+
+    question = llm.invoke(messages)
     return question.content
 
 def loadMistakebook(subject):
@@ -92,22 +99,20 @@ def loadMistakebook(subject):
             # random.sample(sample_questions, 2)
 
 def saveMistakesbook(mistake, subject):
+    data = {}
     if not os.path.exists(MISTAKES_BOOK):
          with open(MISTAKES_BOOK, "w", encoding="utf-8") as f:
-            data = {}
             data[subject] = mistake
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     else:
         with open(MISTAKES_BOOK, "r", encoding="utf-8") as f:
             oldMistakes = f.read()
-            if oldMistakes == "":
-                return []
-            else:
+            if oldMistakes != "":
                 data = json.loads(oldMistakes)
-                data[subject] = mistake
-                with open(MISTAKES_BOOK, "w", encoding="utf-8") as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2)
+            data[subject] = mistake
+            with open(MISTAKES_BOOK, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
 
 def quiz(questions, subject, state, type=True):
     # print(allQuestion, questions['questions'])
@@ -174,9 +179,9 @@ def submitAns(userAns, state):
         return "No more questions. Please restart the quiz.", state
 
 def generateQuiz(subjectName, state):
-    text = generateQuestion("Generate 3 question", subjectName)
+    text = generateQuestion(subjectName)
     if text == "No":
-        return "Please type Subject", state
+        return "Please type different subject", state
     jsonData = json.loads(text)
     quizQuestion, state = quiz(jsonData, subjectName, state)
     return quizQuestion, state
@@ -184,7 +189,6 @@ def generateQuiz(subjectName, state):
 def reviewQuiz(subjectName, state):
     quizQuestion, state = quiz([], subjectName, state, False)
     return quizQuestion, state
-
 
 def process(loader, subjectName):
     docs = loader.load()
