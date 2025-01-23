@@ -1,6 +1,7 @@
 import sys
 import io
 import os
+import json
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
@@ -11,7 +12,8 @@ load_dotenv()
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 DATA_PATH = "School"
-CHROMA_PATH = "Chroma_DB_School_i"
+CHROMA_PATH = "Chroma_DB_School"
+SUBJECT_LIST_FILE = "subject.json"
 
 # initiate the embeddings model
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
@@ -26,6 +28,9 @@ vector_store = Chroma(
 folder = os.listdir(DATA_PATH)
 print(folder)
 
+with open(SUBJECT_LIST_FILE, "w", encoding="utf-8") as f:
+    json.dump(folder, f)
+
 for name in folder:
     print(name)
     loader = PyPDFDirectoryLoader(DATA_PATH + "/" + name)
@@ -34,14 +39,9 @@ for name in folder:
     for d in docs:
         d.metadata["subject"] = name
 
-# print(len(docs))
-# print(docs)
-# print(f"Total characters: {len(docs[0].page_content)}")
-# print(docs[0].page_content)
+    # splitting documents
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    all_splits = text_splitter.split_documents(docs)
+    print("Split the document into sub-documents", len(all_splits))
 
-# splitting documents
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-all_splits = text_splitter.split_documents(docs)
-print("Split the document into sub-documents", len(all_splits))
-
-_ = vector_store.add_documents(documents=all_splits)
+    _ = vector_store.add_documents(documents=all_splits)
