@@ -74,31 +74,20 @@ def subjectNameCheck(subject):
         k=1, 
         filter={"subject": subject}
     )
-    return len(results) > 0
+    return len(results) <= 0
     
 def generateQuestion(subject):
     # retrieve
     num = 5
     name = str
-    if subject == "all":
-        retriever = vector_store.as_retriever(
-            search_type="similarity",
-            search_kwargs={
-                'k': num
-                }
-        )
-        name = "all the resource"
-    elif subjectNameCheck(subject):
-        retriever = vector_store.as_retriever(
-            search_type="similarity",
-            search_kwargs={
-                'k': num,
-                'filter': {"subject": subject}
-                }
-        )
-        name = subject
-    else:
-        return "No"
+    retriever = vector_store.as_retriever(
+        search_type="similarity",
+        search_kwargs={
+            'k': num,
+            'filter': {"subject": subject}
+            }
+    )
+    name = subject
 
     docs = retriever.invoke("Generate questions from " + name)
 
@@ -134,9 +123,11 @@ def generateQuestion(subject):
     return question.content
 
 def startQuiz(subjectName, state):
+    if subjectName == "Add New":
+        return "Please type different subject.", state, gr.update(visible=True), gr.update(visible=False)
+    elif subjectNameCheck(subjectName):
+        return "There is no data in the system yet. Please upload the file.", state, gr.update(visible=True), gr.update(visible=False)
     text = generateQuestion(subjectName)
-    if text == "No":
-        return "Please type different subject", state, gr.update(visible=True), gr.update(visible=False)
     jsonData = json.loads(text)
     quizQuestion, state = quiz(jsonData, subjectName, state)
     return quizQuestion, state, gr.update(visible=True), gr.update(visible=False)
@@ -151,7 +142,7 @@ def loadMistakebook(subject):
                 return []
             else: 
                 data = json.loads(mistakes)
-                return data[subject]
+                return data.get(subject, "NoDB")
             # random.sample(sample_questions, 2)
 
 def saveMistakesbook(mistake, subject):
@@ -176,13 +167,16 @@ def quiz(questions, subject, state, type=True):
         questionType = questions['questions']
     else:
         item = loadMistakebook(subject)
-        if len(item) > 5:
+        if item == "NoDB":
+            return "No database in this subject", state
+        elif len(item) > 5:
             questionType = item[:5]
             saveMistakesbook(item[5:], subject)
         elif(len(item) == 0):
             return "No mistakes. Well Done : )", state
         else:
             questionType = item
+            saveMistakesbook([], subject)
 
     state["subject"] = subject
     state["questions"] = questionType
@@ -197,6 +191,8 @@ def quiz(questions, subject, state, type=True):
     return message, state
 
 def reviewQuiz(subjectName, state):
+    if subjectName == "Add New":
+        return "Please type different subject.", state, gr.update(visible=True), gr.update(visible=False)
     quizQuestion, state = quiz([], subjectName, state, False)
     return quizQuestion, state, gr.update(visible=True), gr.update(visible=False)
 
@@ -228,10 +224,12 @@ def submitAns(userAns, state):
                     q_msg += f"\n{chr(i+65)}. {opt}"
             return f"{feedback}\n\n{q_msg}", state
         else:
-            saveMistakesbook(incorrect_list, state["subject"])
             if len(incorrect_list) == 0:
                 return f"{feedback}\n\nAll questions answered correctly! Mistakes cleared.", state
             else:
+                oldMistake = loadMistakebook(state["subject"])
+                newMistake = oldMistake + incorrect_list
+                saveMistakesbook(newMistake, state["subject"])
                 return (
                     f"{feedback}\n\nQuiz ended. {len(incorrect_list)} mistakes saved."
                 ), state
@@ -241,14 +239,7 @@ def submitAns(userAns, state):
 def streamResponse(message, history, subject):
     # retrieve
     num = 5
-    if subject == "all":
-        retriever = vector_store.as_retriever(
-            search_type="similarity",
-            search_kwargs={
-                'k': num
-                }
-        )
-    elif subjectNameCheck(subject):
+    if subjectNameCheck(subject):
         retriever = vector_store.as_retriever(
             search_type="similarity",
             search_kwargs={
@@ -287,7 +278,7 @@ def streamResponse(message, history, subject):
             partial_message += response.content
             yield partial_message
     else:
-        yield "Please type the valid subject or there is no data in the system yet"
+        yield "There is no data in the system yet. Please upload the file."
 
 # initiate the Gradio app
 with gr.Blocks() as chatbot:
@@ -318,12 +309,13 @@ with gr.Blocks() as chatbot:
         review_button = gr.Button("I want to review")
         
     with gr.Column(visible=False) as question_block:
+        gr.Markdown("## Take the Quiz")
         output_area = gr.Textbox(label="Question", lines=1, interactive=False)
         ans_area = gr.Radio(["A", "B", "C", "D"], label="Your Answer")
         submit_button = gr.Button("Submit Answer")
 
     with gr.Column(visible=False) as chat_block:
-        gr.Markdown("### Chat with the LLM")
+        gr.Markdown("## Chat with the LLM")
         gr.ChatInterface(
             streamResponse,
             type="messages",
