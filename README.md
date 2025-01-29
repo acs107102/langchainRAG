@@ -1,6 +1,6 @@
-# 📚 AI Learning Platform (Powered by LangChain & RAG)
+# 📚 AI Learning Platform
 
-This is an AI-powered learning platform that utilizes **LangChain** and **Retrieval-Augmented Generation (RAG)** techniques to process PDF course materials, provide intelligent Q&A, generate quizzes, and support error review for better learning retention.
+This is an AI-powered learning platform that uses **LangChain** and **Retrieval-Augmented Generation (RAG)** techniques to process PDF course materials, provide intelligent Q&A, generate quizzes, and support error review for better learning retention.
 
 ## ✨ Features
 
