@@ -13,14 +13,14 @@ from dotenv import load_dotenv
 load_dotenv()
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-CHROMA_PATH = "Chroma_DB_School"
+CHROMA_PATH = "Chroma_DB_School_i"
 MISTAKES_BOOK = "mistakes.json"
 SUBJECT_LIST_FILE = "subject.json"
 
 with open(SUBJECT_LIST_FILE, "r", encoding="utf-8") as f:
     subject_list = json.load(f)
 
-llm = ChatOpenAI(model="gpt-4o-mini")
+llm = ChatOpenAI(temperature=1.0, model="gpt-4o-mini")
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
 # vector database : embedding
@@ -32,12 +32,14 @@ vector_store = Chroma(
 
 def addSubject(subject, addNew):
     if subject == "Add New":
-        if addNew:
+        if addNew not in subject_list:
             subject_list.append(addNew.strip())
             with open(SUBJECT_LIST_FILE, "w", encoding="utf-8") as f:
                 subject_list.sort()
                 json.dump(subject_list, f)
                 return "Success add a new subject", gr.update(visible=True), gr.update(choices=['Add New'] + subject_list, value='Add New')
+        elif addNew in subject_list:
+            return "This subject is already in the system", gr.update(visible=True), gr.update(value='Add New')
         else:
             return "Please Type the subject", gr.update(visible=True), gr.update(value='Add New')
     else:
@@ -59,7 +61,7 @@ def process(loader, subjectName):
     vector_store.add_documents(documents=all_splits)
 
 def uploadFile(file, subjectName):
-    if file and subjectName:
+    if file and subjectName and subjectName != "Add New":
         process(PyPDFLoader(file), subjectName)
         return  "Upload Complete (PDF)", gr.update(visible=True)
     else:
@@ -98,7 +100,9 @@ def generateQuestion(subject):
     prompt_Temp = """
         You are a teacher. The subject is: {subjectName}
         Below is the content from the course. Based on this content, please create exactly 3 multiple-choice questions.  
-        Each question must focus on core theories, technical details, or key concepts discussed in the course. Avoid including information related to assignments, syllabus outlines, or non-critical content. 
+        Each question must focus on core theories, technical details, or key concepts discussed in the course. Avoid including:  
+        - Information related to assignments, syllabus outlines, or non-critical content.  
+        - Any references to authors, affiliations, citations, or metadata from research papers.
 
         Important Instructions:  
         1. For each question, provide exactly 4 options: Option A, Option B, Option C, and Option D.  
@@ -126,7 +130,7 @@ def startQuiz(subjectName, state):
     if subjectName == "Add New":
         return "Please type different subject.", state, gr.update(visible=True), gr.update(visible=False)
     elif subjectNameCheck(subjectName):
-        return "There is no data in the system yet. Please upload the file.", state, gr.update(visible=True), gr.update(visible=False)
+        return "There is no data in this subject yet. Please upload the file.", state, gr.update(visible=True), gr.update(visible=False)
     text = generateQuestion(subjectName)
     jsonData = json.loads(text)
     quizQuestion, state = quiz(jsonData, subjectName, state)
@@ -168,7 +172,7 @@ def quiz(questions, subject, state, type=True):
     else:
         item = loadMistakebook(subject)
         if item == "NoDB":
-            return "No database in this subject", state
+            return "No data in this subject", state
         elif len(item) > 5:
             questionType = item[:5]
             saveMistakesbook(item[5:], subject)
@@ -228,7 +232,10 @@ def submitAns(userAns, state):
                 return f"{feedback}\n\nAll questions answered correctly! Mistakes cleared.", state
             else:
                 oldMistake = loadMistakebook(state["subject"])
-                newMistake = oldMistake + incorrect_list
+                if oldMistake == "NoDB":
+                    newMistake = incorrect_list
+                else:
+                    newMistake = oldMistake + incorrect_list
                 saveMistakesbook(newMistake, state["subject"])
                 return (
                     f"{feedback}\n\nQuiz ended. {len(incorrect_list)} mistakes saved."
@@ -239,7 +246,7 @@ def submitAns(userAns, state):
 def streamResponse(message, history, subject):
     # retrieve
     num = 5
-    if subjectNameCheck(subject):
+    if not subjectNameCheck(subject):
         retriever = vector_store.as_retriever(
             search_type="similarity",
             search_kwargs={
@@ -278,7 +285,7 @@ def streamResponse(message, history, subject):
             partial_message += response.content
             yield partial_message
     else:
-        yield "There is no data in the system yet. Please upload the file."
+        yield "There is no data in this subject yet. Please upload the file."
 
 # initiate the Gradio app
 with gr.Blocks() as chatbot:
@@ -330,4 +337,4 @@ with gr.Blocks() as chatbot:
     submit_button.click(submitAns, inputs=[ans_area, state], outputs=[output_area, state])
 
 # launch the Gradio app
-chatbot.launch()
+chatbot.launch(pwa=True)
