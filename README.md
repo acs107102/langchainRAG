@@ -1,6 +1,6 @@
 # 📚 Learning Platform
 
-This is an AI-powered learning platform that uses **LangChain** and **Retrieval-Augmented Generation (RAG)** techniques to process PDF course materials, provide intelligent Q&A, generate quizzes, and support error review for better learning retention.
+This is an AI-powered learning platform that uses **LangChain** and **Retrieval-Augmented Generation (RAG)** techniques to process PDF course materials, provide Q&A, generate quizzes, and support error review for better learning retention.
 
 ## ✨ Features
 
@@ -96,9 +96,3 @@ python main.py
 - ⏳ **Web-based user interface**  
 - ⏳ **More flexible quiz modes**  
 - ⏳ **Enhanced mistake tracking and review features**  
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License**. Feel free to fork and improve it.
