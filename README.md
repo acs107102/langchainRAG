@@ -1,4 +1,4 @@
-# 📚 AI Learning Platform
+# 📚 Learning Platform
 
 This is an AI-powered learning platform that uses **LangChain** and **Retrieval-Augmented Generation (RAG)** techniques to process PDF course materials, provide intelligent Q&A, generate quizzes, and support error review for better learning retention.
 
