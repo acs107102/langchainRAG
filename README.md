@@ -92,7 +92,7 @@ python main.py
 - ✅ **Manual PDF upload support**  
 - ✅ **Ability to add new subjects dynamically**  
 - ✅ **Support for PDF and web-based document loading**  
-- ⏳ **Support for multiple LLM backends (e.g., GPT-4, Llama-2)**  
+- ⏳ **Support for multiple LLM backends (e.g. Llama-2)**  
 - ⏳ **Web-based user interface**  
 - ⏳ **More flexible quiz modes**  
 - ⏳ **Enhanced mistake tracking and review features**  
