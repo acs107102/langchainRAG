@@ -36,7 +36,16 @@ Ensure you have **Python 3.8+** installed, then run:
 pip install -r requirements.txt
 ```
 
-### 2️. Generate Database
+### 2. Set Up Environment Variables
+
+Create a `.env` file in the project root and add your OpenAI API key:
+
+```
+OPENAI_API_KEY=your-api-key-here
+```
+
+
+### 3. Generate Database
 
 Your course materials should be structured as follows:
 
@@ -59,7 +68,7 @@ To process the course materials and create the database, run:
 python generateDB.py
 ```
 
-### 3️. Start the System
+### 4. Start the System
 
 ```bash
 python main.py
