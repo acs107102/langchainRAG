@@ -28,7 +28,7 @@ This is an AI-powered learning platform that utilizes **LangChain** and **Retrie
 
 ## 🚀 Getting Started
 
-### 1️⃣ Install Dependencies
+### 1️. Install Dependencies
 
 Ensure you have **Python 3.8+** installed, then run:
 
@@ -36,7 +36,7 @@ Ensure you have **Python 3.8+** installed, then run:
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Generate Database
+### 2️. Generate Database
 
 Your course materials should be structured as follows:
 
@@ -59,7 +59,7 @@ To process the course materials and create the database, run:
 python generateDB.py
 ```
 
-### 3️⃣ Start the System
+### 3️. Start the System
 
 ```bash
 python main.py
@@ -71,9 +71,12 @@ python main.py
 
 - ✅ **Error review functionality**  
 - ✅ **Manual PDF upload support**  
+- ✅ **Ability to add new subjects dynamically**  
+- ✅ **Support for PDF and web-based document loading**  
 - ⏳ **Support for multiple LLM backends (e.g., GPT-4, Llama-2)**  
 - ⏳ **Web-based user interface**  
 - ⏳ **More flexible quiz modes**  
+- ⏳ **Enhanced mistake tracking and review features**  
 
 ---
 
