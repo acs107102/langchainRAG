@@ -26,6 +26,14 @@ This is an AI-powered learning platform that uses **LangChain** and **Retrieval-
 
 ---
 
+## 🔗 Deployment
+
+You can try the demo deployed on Hugging Face Spaces:
+
+👉 [Live Demo on Hugging Face](https://huggingface.co/spaces/acs107102/Learning_Platform_RAG)
+
+---
+
 ## 🚀 Getting Started
 
 ### 1️. Install Dependencies
