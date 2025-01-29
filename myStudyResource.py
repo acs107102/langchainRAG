@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-CHROMA_PATH = "Chroma_DB_School_i"
+CHROMA_PATH = "Chroma_DB_School"
 MISTAKES_BOOK = "mistakes.json"
 SUBJECT_LIST_FILE = "subject.json"
 
