@@ -86,6 +86,18 @@ python main.py
 
 ---
 
+### Screenshot
+
+QA
+
+![image-1](image-1.png)
+
+Quiz
+
+![image-2](image-2.png)
+
+---
+
 ## 📌 To-Do / Possible Improvements
 
 - ✅ **Error review functionality**  
