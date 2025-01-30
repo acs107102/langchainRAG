@@ -88,7 +88,7 @@ python main.py
 
 ## 📸 Screenshot
 
-QA
+Q&A
 
 ![image-1](image/image-1.png)
 
@@ -106,5 +106,5 @@ Quiz
 - ✅ **Support for PDF and web-based document loading**  
 - ⏳ **Support for multiple LLM backends (e.g. Llama-2)**  
 - ⏳ **Web-based user interface**  
-- ⏳ **More flexible quiz modes**  
+- ⏳ **More quiz modes (e.g. Short-answer questions)**  
 - ⏳ **Enhanced mistake tracking and review features**  
