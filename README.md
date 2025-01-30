@@ -90,11 +90,11 @@ python main.py
 
 QA
 
-![image-1](image-1.png)
+![image-1](image/image-1.png)
 
 Quiz
 
-![image-2](image-2.png)
+![image-2](image/image-2.png)
 
 ---
 
